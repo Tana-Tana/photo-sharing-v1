@@ -1,0 +1,840 @@
+This file is a merged representation of the entire codebase, combined into a single document by Repomix.
+
+<file_summary>
+This section contains a summary of this file.
+
+<purpose>
+This file contains a packed representation of the entire repository's contents.
+It is designed to be easily consumable by AI systems for analysis, code review,
+or other automated processes.
+</purpose>
+
+<file_format>
+The content is organized as follows:
+1. This summary section
+2. Repository information
+3. Directory structure
+4. Repository files, each consisting of:
+  - File path as an attribute
+  - Full contents of the file
+</file_format>
+
+<usage_guidelines>
+- This file should be treated as read-only. Any changes should be made to the
+  original repository files, not this packed version.
+- When processing this file, use the file path to distinguish
+  between different files in the repository.
+- Be aware that this file may contain sensitive information. Handle it with
+  the same level of security as you would the original repository.
+</usage_guidelines>
+
+<notes>
+- Some files may have been excluded based on .gitignore rules and Repomix's configuration
+- Binary files are not included in this packed representation. Please refer to the Repository Structure section for a complete list of file paths, including binary files
+- Files matching patterns in .gitignore are excluded
+- Files matching default ignore patterns are excluded
+- Files are sorted by Git change count (files with more changes are at the bottom)
+</notes>
+
+<additional_info>
+
+</additional_info>
+
+</file_summary>
+
+<directory_structure>
+App.css
+App.js
+App.test.js
+components/TopBar/index.jsx
+components/TopBar/styles.css
+components/UserDetail/index.jsx
+components/UserList/index.jsx
+components/UserPhotos/index.jsx
+index.css
+index.js
+lib/fetchModelData.js
+logo.svg
+modelData/models.js
+reportWebVitals.js
+setupTests.js
+</directory_structure>
+
+<files>
+This section contains the contents of the repository's files.
+
+<file path="App.css">
+.main-topbar-buffer {
+  margin-top: 70px;
+}
+
+.main-grid-item {
+  height: calc(100vh - 85px);
+  padding: 10px;
+}
+</file>
+
+<file path="App.js">
+import './App.css';
+
+import React from "react";
+import { Grid, Typography, Paper } from "@mui/material";
+import { BrowserRouter as Router, Route, Routes } from "react-router-dom";
+
+import TopBar from "./components/TopBar";
+import UserDetail from "./components/UserDetail";
+import UserList from "./components/UserList";
+import UserPhotos from "./components/UserPhotos";
+
+const App = (props) => {
+  return (
+      <Router>
+        <div>
+          <Grid container spacing={2}>
+            <Grid item xs={12}>
+              <TopBar />
+            </Grid>
+            <div className="main-topbar-buffer" />
+            <Grid item sm={3}>
+              <Paper className="main-grid-item">
+                <UserList />
+              </Paper>
+            </Grid>
+            <Grid item sm={9}>
+              <Paper className="main-grid-item">
+                <Routes>
+                  <Route
+                      path="/users/:userId"
+                      element = {<UserDetail />}
+                  />
+                  <Route
+                      path="/photos/:userId"
+                      element = {<UserPhotos />}
+                  />
+                  <Route path="/users" element={<UserList />} />
+                </Routes>
+              </Paper>
+            </Grid>
+          </Grid>
+        </div>
+      </Router>
+  );
+}
+
+export default App;
+</file>
+
+<file path="App.test.js">
+import { render, screen } from '@testing-library/react';
+import App from './App';
+
+test('renders learn react link', () => {
+  render(<App />);
+  const linkElement = screen.getByText(/learn react/i);
+  expect(linkElement).toBeInTheDocument();
+});
+</file>
+
+<file path="components/TopBar/index.jsx">
+import React, { useEffect, useState } from "react";
+import { AppBar, Toolbar, Typography } from "@mui/material";
+import { useLocation, useParams } from "react-router-dom";
+import models from "../../modelData/models"; // Đảm bảo models đã được import đúng
+
+import "./styles.css";
+
+/**
+ * Define TopBar, a React component of Project 4.
+ */
+function TopBar() {
+  const location = useLocation();
+  const { userId } = useParams(); // Lấy userId từ URL (chỉ có trong các route liên quan đến user)
+
+  const [userName, setUserName] = useState("");
+
+  useEffect(() => {
+    // Kiểm tra nếu đang ở trang chi tiết người dùng hoặc ảnh người dùng
+    if (userId) {
+      const user = models.userListModel().find(user => user.id === userId);
+      if (user) {
+        setUserName(user.first_name + " " + user.last_name); // Cập nhật tên người dùng
+      }
+    } else {
+      setUserName(""); // Nếu không có userId thì không hiển thị tên người dùng
+    }
+  }, [userId, location]); // Cập nhật lại khi userId hoặc location thay đổi
+
+  const renderTitle = () => {
+    if (userId) {
+      // Nếu đang ở trang chi tiết người dùng
+      return userName;
+    } else if (location.pathname.includes("photos")) {
+      // Nếu đang ở trang ảnh của người dùng
+      return `Photos of ${userName}`;
+    }
+    return "PhotoShare App"; // Tên mặc định nếu không phải trang chi tiết người dùng hay ảnh người dùng
+  };
+
+  return (
+    <AppBar className="topbar-appBar" position="absolute">
+      <Toolbar>
+        <Typography variant="h5" color="inherit" style={{ flex: 1 }}>
+          Name User
+        </Typography>
+        <Typography variant="h6" color="inherit">
+          {renderTitle()}
+        </Typography>
+      </Toolbar>
+    </AppBar>
+  );
+}
+
+export default TopBar;
+</file>
+
+<file path="components/TopBar/styles.css">
+.topbar-appBar {
+  height: 60;
+  justify-content: "center";
+}
+</file>
+
+<file path="components/UserDetail/index.jsx">
+import React, { useEffect, useState } from "react";
+import { Typography, Button } from "@mui/material";
+import { useParams, Link } from "react-router-dom";
+import models from "../../modelData/models"; // Đảm bảo rằng models đã được import đúng
+
+import "./styles.css";
+
+/**
+ * Define UserDetail, a React component of Project 4.
+ */
+function UserDetail() {
+  const { userId } = useParams(); // Lấy userId từ URL params
+  const [user, setUser] = useState(null);
+
+  // Lấy thông tin người dùng khi component được mount
+  useEffect(() => {
+    const fetchedUser = models.userModel(userId);
+    setUser(fetchedUser);
+  }, [userId]);
+
+  if (!user) {
+    return <Typography variant="h6">Loading user details...</Typography>;
+  }
+
+  return (
+    <div>
+      <Typography variant="h4" gutterBottom>
+        {user.first_name} {user.last_name}
+      </Typography>
+      <Typography variant="h6" color="textSecondary" gutterBottom>
+        {user.occupation} - {user.location}
+      </Typography>
+      <Typography variant="body1" paragraph>
+        <strong>Description:</strong> {user.description}
+      </Typography>
+
+      {/* Link để chuyển tới trang ảnh của người dùng */}
+      <Button 
+        variant="contained" 
+        color="primary" 
+        component={Link} 
+        to={`/photos/${user._id}`}
+      >
+        View Photos
+      </Button>
+    </div>
+  );
+}
+
+export default UserDetail;
+</file>
+
+<file path="components/UserList/index.jsx">
+import React from "react";
+import {
+  Divider,
+  List,
+  ListItem,
+  ListItemText,
+  Typography,
+} from "@mui/material";
+import { Link } from "react-router-dom"; // Import Link từ react-router-dom
+
+import "./styles.css";
+import models from "../../modelData/models";
+
+/**
+ * Define UserList, a React component of Project 4.
+ */
+function UserList () {
+    const users = models.userListModel(); // Lấy danh sách người dùng từ model
+    return (
+      <div>
+        <Typography variant="h6" gutterBottom>
+          User List
+        </Typography>
+        <List component="nav">
+          {users.map((item) => (
+            <React.Fragment key={item._id}>
+              {/* Link để điều hướng tới UserDetail của người dùng */}
+              <ListItem button component={Link} to={`/users/${item._id}`}>
+                <ListItemText primary={`${item.first_name} ${item.last_name}`} />
+              </ListItem>
+              <Divider />
+            </React.Fragment>
+          ))}
+        </List>
+      </div>
+    );
+}
+
+export default UserList;
+</file>
+
+<file path="components/UserPhotos/index.jsx">
+import React, { useEffect, useState } from "react";
+import { Typography, List, ListItem, ListItemText, Link } from "@mui/material";
+import { useParams, Link as RouterLink } from "react-router-dom";
+import models from "../../modelData/models"; // Đảm bảo models đã được import đúng
+
+import "./styles.css";
+
+/**
+ * Define UserPhotos, a React component of Project 4.
+ */
+function UserPhotos() {
+  const { userId } = useParams(); // Lấy userId từ URL params
+  const [photos, setPhotos] = useState([]);
+
+  // Lấy ảnh và bình luận của người dùng khi component được mount
+  useEffect(() => {
+    const fetchedPhotos = models.photoOfUserModel(userId);
+    setPhotos(fetchedPhotos);
+  }, [userId]);
+
+  // Hàm để định dạng ngày giờ thành chuỗi dễ đọc
+  const formatDate = (date) => {
+    const d = new Date(date);
+    return d.toLocaleString(); // Hoặc bạn có thể dùng thư viện như moment.js để format tốt hơn
+  };
+
+  if (!photos || photos.length === 0) {
+    return <Typography variant="body1">No photos found for this user.</Typography>;
+  }
+
+  return (
+    <div>
+      <Typography variant="h4" gutterBottom>
+        Photos of User {userId}
+      </Typography>
+      
+      {photos.map((photo) => (
+        <div key={photo._id} className="photo-item">
+          <Typography variant="h6">Photo: {photo.title}</Typography>
+          <img src={photo.url} alt={photo.title} style={{ width: "100%", maxHeight: "400px", objectFit: "cover" }} />
+          <Typography variant="body1" color="textSecondary">
+            <strong>Created on:</strong> {formatDate(photo.creationDate)}
+          </Typography>
+
+          <Typography variant="h6" color="textSecondary">Comments:</Typography>
+          <List>
+            {photo.comments.map((comment) => (
+              <ListItem key={comment._id}>
+                <ListItemText
+                  primary={
+                    <Typography variant="body2">
+                      <Link 
+                        component={RouterLink} 
+                        to={`/users/${comment.userId}`} 
+                        color="primary"
+                      >
+                        {comment.userName}
+                      </Link>
+                      : {comment.text}
+                    </Typography>
+                  }
+                  secondary={formatDate(comment.creationDate)}
+                />
+              </ListItem>
+            ))}
+          </List>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+export default UserPhotos;
+</file>
+
+<file path="index.css">
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+code {
+  font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
+    monospace;
+}
+</file>
+
+<file path="index.js">
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import './index.css';
+import App from './App';
+import reportWebVitals from './reportWebVitals';
+
+const root = ReactDOM.createRoot(document.getElementById('root'));
+root.render(
+  <React.StrictMode>
+    <App />
+  </React.StrictMode>
+);
+
+// If you want to start measuring performance in your app, pass a function
+// to log results (for example: reportWebVitals(console.log))
+// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
+reportWebVitals();
+</file>
+
+<file path="lib/fetchModelData.js">
+/**
+ * fetchModel - Fetch a model from the web server.
+ *
+ * @param {string} url      The URL to issue the GET request.
+ *
+ */
+function fetchModel(url) {
+  const models = null;
+  return models;
+}
+
+export default fetchModel;
+</file>
+
+<file path="logo.svg">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 841.9 595.3"><g fill="#61DAFB"><path d="M666.3 296.5c0-32.5-40.7-63.3-103.1-82.4 14.4-63.6 8-114.2-20.2-130.4-6.5-3.8-14.1-5.6-22.4-5.6v22.3c4.6 0 8.3.9 11.4 2.6 13.6 7.8 19.5 37.5 14.9 75.7-1.1 9.4-2.9 19.3-5.1 29.4-19.6-4.8-41-8.5-63.5-10.9-13.5-18.5-27.5-35.3-41.6-50 32.6-30.3 63.2-46.9 84-46.9V78c-27.5 0-63.5 19.6-99.9 53.6-36.4-33.8-72.4-53.2-99.9-53.2v22.3c20.7 0 51.4 16.5 84 46.6-14 14.7-28 31.4-41.3 49.9-22.6 2.4-44 6.1-63.6 11-2.3-10-4-19.7-5.2-29-4.7-38.2 1.1-67.9 14.6-75.8 3-1.8 6.9-2.6 11.5-2.6V78.5c-8.4 0-16 1.8-22.6 5.6-28.1 16.2-34.4 66.7-19.9 130.1-62.2 19.2-102.7 49.9-102.7 82.3 0 32.5 40.7 63.3 103.1 82.4-14.4 63.6-8 114.2 20.2 130.4 6.5 3.8 14.1 5.6 22.5 5.6 27.5 0 63.5-19.6 99.9-53.6 36.4 33.8 72.4 53.2 99.9 53.2 8.4 0 16-1.8 22.6-5.6 28.1-16.2 34.4-66.7 19.9-130.1 62-19.1 102.5-49.9 102.5-82.3zm-130.2-66.7c-3.7 12.9-8.3 26.2-13.5 39.5-4.1-8-8.4-16-13.1-24-4.6-8-9.5-15.8-14.4-23.4 14.2 2.1 27.9 4.7 41 7.9zm-45.8 106.5c-7.8 13.5-15.8 26.3-24.1 38.2-14.9 1.3-30 2-45.2 2-15.1 0-30.2-.7-45-1.9-8.3-11.9-16.4-24.6-24.2-38-7.6-13.1-14.5-26.4-20.8-39.8 6.2-13.4 13.2-26.8 20.7-39.9 7.8-13.5 15.8-26.3 24.1-38.2 14.9-1.3 30-2 45.2-2 15.1 0 30.2.7 45 1.9 8.3 11.9 16.4 24.6 24.2 38 7.6 13.1 14.5 26.4 20.8 39.8-6.3 13.4-13.2 26.8-20.7 39.9zm32.3-13c5.4 13.4 10 26.8 13.8 39.8-13.1 3.2-26.9 5.9-41.2 8 4.9-7.7 9.8-15.6 14.4-23.7 4.6-8 8.9-16.1 13-24.1zM421.2 430c-9.3-9.6-18.6-20.3-27.8-32 9 .4 18.2.7 27.5.7 9.4 0 18.7-.2 27.8-.7-9 11.7-18.3 22.4-27.5 32zm-74.4-58.9c-14.2-2.1-27.9-4.7-41-7.9 3.7-12.9 8.3-26.2 13.5-39.5 4.1 8 8.4 16 13.1 24 4.7 8 9.5 15.8 14.4 23.4zM420.7 163c9.3 9.6 18.6 20.3 27.8 32-9-.4-18.2-.7-27.5-.7-9.4 0-18.7.2-27.8.7 9-11.7 18.3-22.4 27.5-32zm-74 58.9c-4.9 7.7-9.8 15.6-14.4 23.7-4.6 8-8.9 16-13 24-5.4-13.4-10-26.8-13.8-39.8 13.1-3.1 26.9-5.8 41.2-7.9zm-90.5 125.2c-35.4-15.1-58.3-34.9-58.3-50.6 0-15.7 22.9-35.6 58.3-50.6 8.6-3.7 18-7 27.7-10.1 5.7 19.6 13.2 40 22.5 60.9-9.2 20.8-16.6 41.1-22.2 60.6-9.9-3.1-19.3-6.5-28-10.2zM310 490c-13.6-7.8-19.5-37.5-14.9-75.7 1.1-9.4 2.9-19.3 5.1-29.4 19.6 4.8 41 8.5 63.5 10.9 13.5 18.5 27.5 35.3 41.6 50-32.6 30.3-63.2 46.9-84 46.9-4.5-.1-8.3-1-11.3-2.7zm237.2-76.2c4.7 38.2-1.1 67.9-14.6 75.8-3 1.8-6.9 2.6-11.5 2.6-20.7 0-51.4-16.5-84-46.6 14-14.7 28-31.4 41.3-49.9 22.6-2.4 44-6.1 63.6-11 2.3 10.1 4.1 19.8 5.2 29.1zm38.5-66.7c-8.6 3.7-18 7-27.7 10.1-5.7-19.6-13.2-40-22.5-60.9 9.2-20.8 16.6-41.1 22.2-60.6 9.9 3.1 19.3 6.5 28.1 10.2 35.4 15.1 58.3 34.9 58.3 50.6-.1 15.7-23 35.6-58.4 50.6zM320.8 78.4z"/><circle cx="420.9" cy="296.5" r="45.7"/><path d="M520.5 78.1z"/></g></svg>
+</file>
+
+<file path="modelData/models.js">
+"use strict";
+
+/**
+ * Model data for Project 4 - the photo sharing site.
+ * This module returns an object called models with the following
+ * functions:
+ *
+ * models.userListModel() - A function that returns the list of users on
+ * the system. The list is returned as an array of objects containing:
+ *   _id (string)         - The ID of the user.
+ *   first_name (string)  - The first name of the user.
+ *   last_name (string)   - The last name of the user.
+ *   location (string)    - The location of the user.
+ *   description (string) - A brief user description.
+ *   occupation (string)  - The occupation of the user.
+ *
+ * models.userModel() - A function that returns the info of the specified
+ * user. Called with an user ID (id), the function returns n object containing:
+ *   _id (string)         - The ID of the user.
+ *   first_name (string)  - The first name of the user.
+ *   last_name (string)   - The last name of the user.
+ *   location (string)    - The location of the user.
+ *   description (string) - A brief user description.
+ *   occupation (string)  - The occupation of the user.
+ *
+ * models.photoOfUserModel() - A function that returns the photos belong to
+ * the specified user. Called with an user ID (id), the function returns an
+ * object containing:
+ *   _id (string)         - The ID of the photo
+ *   date_time (date)     - The date and time the picture was taken in ISO
+ *                          format.
+ *   file_name (string)   - The file name in the image directory of the picture.
+ *   user_id (string)     - The user id of the picture's owner.
+ *   comments ([objects]) - An array of Comments with the properties:
+ *       _id (string)       - The ID of the comment.
+ *       date_time (date)   - The date the comment was made in ISO format.
+ *       comment (string)   - The text of the comment.
+ *       user: (object)     - The user who made the comment.
+ *       photo_id: (string) - The ID of the photo the comment belongs to.
+ *
+ * models.schemaModel() - A function that returns the test info from the
+ * fake schema. The function returns an object containing:
+ *   _id (string)           - The ID of the schema.
+ *   __v (number)           - The version number.
+ *   load_date_time (date)  - The date the schema was made in ISO format.
+ */
+
+const schemaInfo = {
+  load_date_time: "Fri Apr 29 2016 01:45:15 GMT-0700 (PDT)",
+  __v: 0,
+  _id: "57231f1b30e4351f4e9f4bf6",
+};
+
+// Create init users.
+
+const im = {
+  _id: "57231f1a30e4351f4e9f4bd7",
+  first_name: "Ian",
+  last_name: "Malcolm",
+  location: "Austin, TX",
+  description: "Should've stayed in the car.",
+  occupation: "Mathematician",
+};
+const er = {
+  _id: "57231f1a30e4351f4e9f4bd8",
+  first_name: "Ellen",
+  last_name: "Ripley",
+  location: "Nostromo",
+  description: "Lvl 6 rating. Pilot.",
+  occupation: "Warrant Officer",
+};
+const pt = {
+  _id: "57231f1a30e4351f4e9f4bd9",
+  first_name: "Peregrin",
+  last_name: "Took",
+  location: "Gondor",
+  description:
+    "Home is behind, the world ahead... " +
+    "And there are many paths to tread. Through shadow, to the edge of night, " +
+    "until the stars are all alight... Mist and shadow, cloud and shade, " +
+    "all shall fade... all... shall... fade... ",
+  occupation: "Thain",
+};
+const rk = {
+  _id: "57231f1a30e4351f4e9f4bda",
+  first_name: "Rey",
+  last_name: "Kenobi",
+  location: "D'Qar",
+  description: "Excited to be here!",
+  occupation: "Rebel",
+};
+const al = {
+  _id: "57231f1a30e4351f4e9f4bdb",
+  first_name: "April",
+  last_name: "Ludgate",
+  location: "Pawnee, IN",
+  description: "Witch",
+  occupation: "Animal Control",
+};
+const jo = {
+  _id: "57231f1a30e4351f4e9f4bdc",
+  first_name: "John",
+  last_name: "Ousterhout",
+  location: "Stanford, CA",
+  description: "<i>CS142!</i>",
+  occupation: "Professor",
+};
+
+const users = [im, er, pt, rk, al, jo];
+
+// Create initial photos.
+const photo1 = {
+  _id: "57231f1a30e4351f4e9f4bdd",
+  date_time: "2012-08-30 10:44:23",
+  file_name: "ouster.jpg",
+  user_id: jo._id,
+};
+const photo2 = {
+  _id: "57231f1a30e4351f4e9f4bde",
+  date_time: "2009-09-13 20:00:00",
+  file_name: "malcolm2.jpg",
+  user_id: im._id,
+};
+const photo3 = {
+  _id: "57231f1a30e4351f4e9f4bdf",
+  date_time: "2009-09-13 20:05:03",
+  file_name: "malcolm1.jpg",
+  user_id: im._id,
+};
+const photo4 = {
+  _id: "57231f1a30e4351f4e9f4be0",
+  date_time: "2013-11-18 18:02:00",
+  file_name: "ripley1.jpg",
+  user_id: er._id,
+};
+const photo5 = {
+  _id: "57231f1a30e4351f4e9f4be1",
+  date_time: "2013-09-20 17:30:00",
+  file_name: "ripley2.jpg",
+  user_id: er._id,
+};
+const photo6 = {
+  _id: "57231f1a30e4351f4e9f4be2",
+  date_time: "2009-07-10 16:02:49",
+  file_name: "kenobi1.jpg",
+  user_id: rk._id,
+};
+const photo7 = {
+  _id: "57231f1a30e4351f4e9f4be3",
+  date_time: "2010-03-18 23:48:00",
+  file_name: "kenobi2.jpg",
+  user_id: rk._id,
+};
+const photo8 = {
+  _id: "57231f1a30e4351f4e9f4be4",
+  date_time: "2010-08-30 14:26:00",
+  file_name: "kenobi3.jpg",
+  user_id: rk._id,
+};
+const photo9 = {
+  _id: "57231f1a30e4351f4e9f4be5",
+  date_time: "2013-12-03 09:02:00",
+  file_name: "took1.jpg",
+  user_id: pt._id,
+};
+const photo10 = {
+  _id: "57231f1a30e4351f4e9f4be6",
+  date_time: "2013-12-03 09:03:00",
+  file_name: "took2.jpg",
+  user_id: pt._id,
+};
+const photo11 = {
+  _id: "57231f1a30e4351f4e9f4be7",
+  date_time: "2013-09-04 09:16:32",
+  file_name: "ludgate1.jpg",
+  user_id: al._id,
+};
+const photo12 = {
+  _id: "57231f1a30e4351f4e9f4be8",
+  date_time: "2008-10-16 17:12:28",
+  file_name: "kenobi4.jpg",
+  user_id: rk._id,
+};
+
+const photos = [
+  photo1,
+  photo2,
+  photo3,
+  photo4,
+  photo5,
+  photo6,
+  photo7,
+  photo8,
+  photo9,
+  photo10,
+  photo11,
+  photo12,
+];
+
+// Create initial comments.
+const comment1 = {
+  _id: "57231f1a30e4351f4e9f4be9",
+  date_time: "2012-09-02 14:01:00",
+  comment:
+    "Learning new programming languages is hard... " +
+    "it's so easy to forget a </div>!",
+  user: jo,
+  photo_id: photo1._id,
+};
+
+const comment2 = {
+  _id: "57231f1a30e4351f4e9f4bea",
+  date_time: "2013-09-06 14:02:00",
+  comment:
+    "This is another comment, with a bit more text; " +
+    "if the text gets long enough, does it wrap properly " +
+    "from line to line?",
+  user: jo,
+  photo_id: photo1._id,
+};
+
+const comment3 = {
+  _id: "57231f1a30e4351f4e9f4beb",
+  date_time: "2013-09-08 14:06:00",
+  comment:
+    "If you see this text in <b>boldface</b> " +
+    "then HTML escaping isn't working properly.",
+  user: jo,
+  photo_id: photo1._id,
+};
+
+const comment4 = {
+  _id: "57231f1a30e4351f4e9f4bec",
+  date_time: "2009-09-14 18:07:00",
+  comment:
+    "If there is one thing the history of evolution has" +
+    " taught us it's that life will not be contained. Life breaks " +
+    "free, it expands to new territories and crashes through " +
+    "barriers, painfully, maybe even dangerously, but, uh... well, " +
+    "there it is. Life finds a way.",
+  user: im,
+  photo_id: photo2._id,
+};
+
+const comment5 = {
+  _id: "57231f1a30e4351f4e9f4bed",
+  date_time: "2013-11-28 17:45:13",
+  comment:
+    "Back from my trip. Did IQs just... drop sharply while I was " + "away?",
+  user: er,
+  photo_id: photo5._id,
+};
+
+const comment6 = {
+  _id: "57231f1a30e4351f4e9f4bee",
+  date_time: "2013-11-02 14:07:00",
+  comment:
+    "Hey Rey, great form. Love what " +
+    "you do with the scavenged tech, got any tips?",
+  user: er,
+  photo_id: photo7._id,
+};
+
+const comment7 = {
+  _id: "57231f1a30e4351f4e9f4bef",
+  date_time: "2013-11-02 14:09:15",
+  comment:
+    "Definitely! I love your work! I'm away on a trip at " +
+    "the moment, but let's meet up when I get back! :)",
+  user: rk,
+  photo_id: photo7._id,
+};
+
+const comment8 = {
+  _id: "57231f1a30e4351f4e9f4bf0",
+  date_time: "2010-09-06 13:59:33",
+  comment:
+    "Made a new friend today! Well, they followed me " + "home, anyway.",
+  user: rk,
+  photo_id: photo8._id,
+};
+
+const comment9 = {
+  _id: "57231f1a30e4351f4e9f4bf1",
+  date_time: "2008-10-16 18:04:55",
+  comment:
+    "Wouldn't get anywhere without this beauty! " +
+    "Completely built from scraps by hand, but she goes at top " +
+    "speeds that'll rival any First Order piece of junk.",
+  user: rk,
+  photo_id: photo12._id,
+};
+
+const comment10 = {
+  _id: "57231f1a30e4351f4e9f4bf2",
+  date_time: "2013-12-04 13:12:00",
+  comment: "What do you mean you haven't heard of second " + "breakfast?",
+  user: pt,
+  photo_id: photo10._id,
+};
+
+const comment11 = {
+  _id: "57231f1a30e4351f4e9f4bf3",
+  date_time: "2013-09-04 10:14:32",
+  comment:
+    "Beautiful yet cold and aloof. Loner. Does not obey, " +
+    "occasionally chooses to cooperate. ",
+  user: al,
+  photo_id: photo11._id,
+};
+
+const comment12 = {
+  _id: "57231f1a30e4351f4e9f4bf4",
+  date_time: "2016-01-04 2:00:01",
+  comment: "Which one are you?",
+  user: al,
+  photo_id: photo9._id,
+};
+
+const comment13 = {
+  _id: "57231f1a30e4351f4e9f4bf5",
+  date_time: "2016-01-04 2:04:01",
+  comment: "The tall one.",
+  user: pt,
+  photo_id: photo9._id,
+};
+
+const comments = [
+  comment1,
+  comment2,
+  comment3,
+  comment4,
+  comment5,
+  comment6,
+  comment7,
+  comment8,
+  comment9,
+  comment10,
+  comment11,
+  comment12,
+  comment13,
+];
+
+comments.forEach(function (comment) {
+  const photo = photos.filter(function (photo) {
+    return photo._id === comment.photo_id;
+  })[0]; // Only one match. Return the content of the match inside the array
+
+  if (!photo.comments) {
+    photo.comments = [];
+  }
+  photo.comments.push(comment);
+});
+
+const userListModel = function () {
+  return users;
+};
+
+const userModel = function (userId) {
+  for (let i = 0; i < users.length; i++) {
+    if (users[i]._id === userId) {
+      return users[i];
+    }
+  }
+  return null;
+};
+
+const photoOfUserModel = function (userId) {
+  return photos.filter(function (photo) {
+    return photo.user_id === userId;
+  });
+};
+
+const schemaModel = function () {
+  return schemaInfo;
+};
+
+const models = {
+  userListModel: userListModel,
+  userModel: userModel,
+  photoOfUserModel: photoOfUserModel,
+  schemaInfo: schemaModel,
+};
+
+export default models;
+</file>
+
+<file path="reportWebVitals.js">
+const reportWebVitals = onPerfEntry => {
+  if (onPerfEntry && onPerfEntry instanceof Function) {
+    import('web-vitals').then(({ getCLS, getFID, getFCP, getLCP, getTTFB }) => {
+      getCLS(onPerfEntry);
+      getFID(onPerfEntry);
+      getFCP(onPerfEntry);
+      getLCP(onPerfEntry);
+      getTTFB(onPerfEntry);
+    });
+  }
+};
+
+export default reportWebVitals;
+</file>
+
+<file path="setupTests.js">
+// jest-dom adds custom jest matchers for asserting on DOM nodes.
+// allows you to do things like:
+// expect(element).toHaveTextContent(/react/i)
+// learn more: https://github.com/testing-library/jest-dom
+import '@testing-library/jest-dom';
+</file>
+
+</files>
